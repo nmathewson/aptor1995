@@ -1,0 +1,238 @@
+Specifiations for   All
+                    Purpose
+                    Text-storage
+                    Objects &
+                    Routines
+
+I. ROUTINES
+    A. Nomenclature
+    B. Names
+II. APTORCODE
+    A. Command Prefixes
+    B. Makefile syntax
+    C. Commands
+III. USING FILES
+    A. File types
+    B. Using .DEF files
+IV. IMPLEMENTATION
+    A. Function Implementation
+    B. Internal Rerpresentation
+    C. File Specifications
+
+I. Routines
+
+I.A. Nomenclature
+
+    All the below functions are member public functions of the APTOR_file class.
+    Many APTOR functions take, as their first argument, a null-terminated
+character string containing the name of a specific APTOR text block. The first
+sixteen characters of this string are relevent; the rest are ignored. Names
+are not case-sensitive.
+
+I.B. Names
+
+    Notes:
+    1. Functions marked D are public iff APT_DEBUG is defined. Otherwise,
+       they are protected.
+    2. Many Recall functions are overloaded to accept as arguments either
+       const char *name or unsigned token. This is to accomodate .def files,
+       token-calls, and name-calls.
+
+
+I.B.1. Constructors
+
+    APTOR_file::APTOR_file(void)
+      Creates a null-APTOR_file.
+    APTOR_file::APTOR_file(const char *apx_name, const char *map_name)
+      Creates an an APTOR_file set to the given file, and decodes it with
+      the given key. Opens the file, reads map data.
+
+I.B.2. Destructor
+
+    APTOR_file::~APTOR_file(void)                                     0
+      Closes the relevant file (if any is open.) and frees all memory.
+
+I.B.3. Configuration
+
+    APTOR_file::open(const char *apx_name, const char *map_name)
+      Opens a file, decodes it with the key, and reads map data.
+
+    APTOR_file::close(void)
+      Closes open file (if any), frees all memory associated with it.
+
+I.B.4. Information
+
+    unsigned APTOR_file::get_token(unsigned token)
+    unsigned APTOR_file::get_token(const char *block_name)
+      Returns the token associated with a given name.
+
+    const char *APTOR_file::get_name(unsigned token)
+    const char *APTOR_file::get_name(const char *block_name)
+      Returns the name associated with a given token.
+
+    int APTOR_file::size(const char *block_name)
+    int APTOR_file::size(unsigned token)
+      Returns the size, in characters, of the given text block, not including
+      the terminating null.
+
+I.B.5. Recall
+
+    const char *APTOR_file::operator[](const char *name)
+    const char *APTOR_file::operator[](unsigned token)
+      Returns a pointer to the text block specified by name or token. It
+      is important that this pointer be used immediately; the pointed-to
+      data will be overwritten by future calls to operator[].
+
+    void APTOR_file::get(const char *name, char *buf, int max_length = -1)
+    void APTOR_file::get(unsigned token, char *buf, int max_length = -1)
+      Copies the text block specified by name or token into buf. If max_length
+      is greater than -1, then no more than max_length characters will be
+      copied (not including the terminating null).
+
+    char *APTOR_file::copy(const char *name)
+    char *APTOR_file::copy(unsigned token)
+      Uses NEW to allocate space for the specified text block, and copies
+      the block into that space. Returns a pointer to the newly allocated
+      memory.
+
+I.B.6. Internal
+
+    For information on functions used internally by APTOR_file, see
+III.A.2. Internal Functions.
+
+II. APTORcode
+
+II.A. Command Prefixes
+
+II.A.1. Command prefixes for inline code
+
+    All lines that begin with "//!" will be interpreted according to
+APTORCode syntax.  The "//" will cause them to be ignored by the C++
+compiler, while the "//!" will signal APTCOMP.EXE. For example the
+"!begin" command should be written as: "//!begin" if written inline.
+    Note: "//!" must constitute the first three characters of the line
+exactly, if APTCOMP is to recognize the line as an inline code. The following
+would NOT work: " //!begin" "// !begin" "///!begin".
+
+II.A.2. Command prefixes for APTORCode files
+
+    If APTORCode is written externally to any file, the "//" prefix is
+no longer necessary. All commands should be prefixed by "!", however, as in
+"!begin" and "!end".
+
+II.B. Makefile Syntax
+
+II.B.1. Makefile directives
+
+    The following are recognized by APTCOMP.EXE.
+
+# [xxx]
+        A "#" indicates a comment, causing APTCOMP to ignore the rest
+        of the line.
+
+BLOCKS <xxx>
+        Allocates <xxx> blocks for use, where 16 <= xxx <= 65535. The default
+        is 8192.
+        This directive is placement-sensitive
+
+MAKE <xxx> [ALL | MAP | DEF | MPX | APX] [ALL | MAP | DEF | MPX | APX] ...
+        <xxx> is, in this case, taken to be the first 8 letters of an APX file
+        family. This family, AND ONLY THIS FAMILY will be generated. As many
+        of the above flags as necessary may be specified. Note that the APX
+        file will ALWAYS be generated, no matter what.
+        This directive is manditory and placement-sensitive. See II.B.2.
+
+USE <xxxxxx> [INLINE | APTOR]
+        Reads information from file [xxxxxx].  If no second argument is given,
+        <xxxx> is interpreted in the manner default for its extention.
+        Otherwise, the file is interpreted according to the 2nd argument.
+
+II.B.2. Notes on makefile use.
+
+    Makefiles should only be used when there is more than one source file
+containing APTORCode for a single .apx file.
+    It is very important that, if !beginfile directives are used in any of
+the source files, the given filenames match the name of the .apm file, or
+the filename given in the MAKE directive. See notes on !beginfile.
+    A makefile must follow this format, allowing for whitespace & comments:
+    1. MAKE <xxxxxxxx>                  // Manditory
+    2. [BLOCKS <nnn>]                   // Optional
+    3. USE <xxxxxxxx.xxx> [xxx]         // 1st USE is manditory
+    4. [USE <xxxxxxxx.xxx> [xxx]]       // Subsequent USE's are optional
+    5.... (&tc)
+
+II.C. Commands
+    Here follow all relevant APTORCODE commands.  Note that they are all
+case-sensitive.  Also, see II.A. for information on prefixes.
+
+    // [xxxxxx]
+        A // indicates a comment, causing APTCOMP to ignore the rest of the
+        line.
+      EXAMPLE:
+        !begin xyzzy        // secret code!
+
+!begin <xxxxxx>...!end
+        The !begin command indicated the beginning of a text block, named
+        [xxxxx]. In general, [xxxxx] may be any valid C name. Only the first
+        16 characters are significant. The text block is assumed to continue
+        until the !end directive.
+      NOTES:
+       *A text block can be at most 4096 characters long. This allows
+        about 51 lines of 80 columns each.
+       *Comments are not allowed inside a text block.
+       *Newline characters are inserted automatically at the end of lines.
+       *It is an error to include ANY material between !begin and !end other
+        than a text block.
+       *It is an error to encounter any other command before !end.
+       *The names of blocks are NOT case-sensitive.
+       *Newlines are inserted at the end of each line, UNLESS the last
+        character of the line is a '\'.
+      EXAMPLE:
+        //!begin happy_troll
+        //  You see a happy little troll. He is smiling a lot. His expression
+        //practically DRIPS his joy at seeing you.
+        //!end
+
+!beginfile <xxxxx>...!endfile
+        The !beginfile command is intended for use in projects that use
+        more than one .apx file.  Any data between the !beginfile and !endfile
+        commands will be interpreted as belonging to a file named <xxxx>.apx,
+        and will be ignored if any other file is being compiled.
+          <xxxx> specifies an APX FAMILY, and hence no extention is allowed.
+          Information NOT between !beginfile and !endfile is interpreted
+        as belonging to ALL destination files.
+
+III. USING FILES
+
+III.A. File Types
+
+The following file extentions are used:
+SOURCE   .APM            Makefile
+         .APT            Aptorcode file
+         .CPP, .H, etc.  Inline Aptorcode file
+
+TEXT     .APX            Holds encoded text blocks.
+
+MAP      .MAP            Long, verbose map into .apx
+         .MPX            Succint map into .apx
+
+INCLUDE  .DEF            For #include directives; See III.B.
+
+NOTES: *Every project must have an .APM file in order to generate all other
+         files.
+       *An .APX file is also manditory, for text-block storage.
+       *.MAP files provide a convenient debugging tool, in that they list the
+         names, addresses, and tokens for all of the blocks.  On the other
+         hand, they consume a good deal of run-time memory, take longer to
+         load, and contain the uncoded names of all the text blocks. Therefore,
+         .MAP files should not be included with the final package.
+       *.MPX files pack addresses into minimal space, and hence are optimal
+         for final packages. On the other hand, they do not enclose block
+         names in any form: APTOR_file functions must be called with numerical
+         tokens or .DEF macros (see III.B).
+
+III.B. Using .DEF files.
+
+
+
+
