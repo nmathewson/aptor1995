@@ -1,0 +1,11 @@
+And here's a silly old text-string store program that i did around
+1995.  Was it supposed to be for storing obfuscated strings in a text
+adventure?  It has a broken Vigenere cipher, for what that's worth.
+
+I think it was supposed to build under Borland C++, judging from the
+makefiles.
+
+In any case, I can't recommend this for anything other than silly
+"let's laugh at my high-school code" purposes.  But have fun!
+
+- Nick Mathewson
